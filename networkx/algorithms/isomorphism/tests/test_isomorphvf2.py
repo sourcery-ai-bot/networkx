@@ -90,31 +90,20 @@ class TestVF2GraphDB:
     def create_graph(filename):
         """Creates a Graph instance from the filename."""
 
-        # The file is assumed to be in the format from the VF2 graph database.
-        # Each file is composed of 16-bit numbers (unsigned short int).
-        # So we will want to read 2 bytes at a time.
+        with open(filename, mode="rb") as fh:
+            # Grab the number of nodes.
+            # Node numeration is 0-based, so the first node has index 0.
+            nodes = struct.unpack("<H", fh.read(2))[0]
 
-        # We can read the number as follows:
-        #   number = struct.unpack('<H', file.read(2))
-        # This says, expect the data in little-endian encoding
-        # as an unsigned short int and unpack 2 bytes from the file.
+            graph = nx.Graph()
+            for from_node in range(nodes):
+                # Get the number of edges.
+                edges = struct.unpack("<H", fh.read(2))[0]
+                for _ in range(edges):
+                    # Get the terminal node.
+                    to_node = struct.unpack("<H", fh.read(2))[0]
+                    graph.add_edge(from_node, to_node)
 
-        fh = open(filename, mode="rb")
-
-        # Grab the number of nodes.
-        # Node numeration is 0-based, so the first node has index 0.
-        nodes = struct.unpack("<H", fh.read(2))[0]
-
-        graph = nx.Graph()
-        for from_node in range(nodes):
-            # Get the number of edges.
-            edges = struct.unpack("<H", fh.read(2))[0]
-            for edge in range(edges):
-                # Get the terminal node.
-                to_node = struct.unpack("<H", fh.read(2))[0]
-                graph.add_edge(from_node, to_node)
-
-        fh.close()
         return graph
 
     def test_graph(self):
@@ -149,12 +138,12 @@ class TestAtlas:
 
     def test_graph_atlas(self):
         # Atlas = nx.graph_atlas_g()[0:208] # 208, 6 nodes or less
-        Atlas = self.GAG[0:100]
+        Atlas = self.GAG[:100]
         alphabet = list(range(26))
         for graph in Atlas:
             nlist = list(graph)
             labels = alphabet[: len(nlist)]
-            for s in range(10):
+            for _ in range(10):
                 random.shuffle(labels)
                 d = dict(zip(nlist, labels))
                 relabel = nx.relabel_nodes(graph, d)
@@ -206,10 +195,11 @@ def test_multiedge():
             random.shuffle(new_nodes)
             d = dict(zip(nodes, new_nodes))
             g2 = nx.relabel_nodes(g1, d)
-            if not g1.is_directed():
-                gm = iso.GraphMatcher(g1, g2)
-            else:
-                gm = iso.DiGraphMatcher(g1, g2)
+            gm = (
+                iso.DiGraphMatcher(g1, g2)
+                if g1.is_directed()
+                else iso.GraphMatcher(g1, g2)
+            )
             assert gm.is_isomorphic()
             # Testing if monomorphism works in multigraphs
             assert gm.subgraph_is_monomorphic()
@@ -239,10 +229,11 @@ def test_selfloop():
             random.shuffle(new_nodes)
             d = dict(zip(nodes, new_nodes))
             g2 = nx.relabel_nodes(g1, d)
-            if not g1.is_directed():
-                gm = iso.GraphMatcher(g1, g2)
-            else:
-                gm = iso.DiGraphMatcher(g1, g2)
+            gm = (
+                iso.DiGraphMatcher(g1, g2)
+                if g1.is_directed()
+                else iso.GraphMatcher(g1, g2)
+            )
             assert gm.is_isomorphic()
 
 
@@ -271,10 +262,11 @@ def test_selfloop_mono():
             d = dict(zip(nodes, new_nodes))
             g2 = nx.relabel_nodes(g1, d)
             g2.remove_edges_from(nx.selfloop_edges(g2))
-            if not g1.is_directed():
-                gm = iso.GraphMatcher(g2, g1)
-            else:
-                gm = iso.DiGraphMatcher(g2, g1)
+            gm = (
+                iso.DiGraphMatcher(g2, g1)
+                if g1.is_directed()
+                else iso.GraphMatcher(g2, g1)
+            )
             assert not gm.subgraph_is_monomorphic()
 
 
@@ -349,10 +341,11 @@ def test_multiple():
             gmB = iso.DiGraphMatcher(g1, g3)
         assert gmA.is_isomorphic()
         g2.remove_node("C")
-        if not g1.is_directed():
-            gmA = iso.GraphMatcher(g1, g2)
-        else:
-            gmA = iso.DiGraphMatcher(g1, g2)
+        gmA = (
+            iso.DiGraphMatcher(g1, g2)
+            if g1.is_directed()
+            else iso.GraphMatcher(g1, g2)
+        )
         assert gmA.subgraph_is_isomorphic()
         assert gmB.subgraph_is_isomorphic()
         assert gmA.subgraph_is_monomorphic()

@@ -303,7 +303,7 @@ def _all_simple_paths_multigraph(G, source, targets, cutoff):
         else:  # len(visited) == cutoff:
             for target in targets - set(visited.keys()):
                 count = ([child] + list(children)).count(target)
-                for i in range(count):
+                for _ in range(count):
                     yield list(visited) + [target]
             stack.pop()
             visited.popitem()
@@ -381,14 +381,14 @@ def all_simple_edge_paths(G, source, target, cutoff=None):
 
     """
     if source not in G:
-        raise nx.NodeNotFound("source node %s not in graph" % source)
+        raise nx.NodeNotFound(f"source node {source} not in graph")
     if target in G:
         targets = {target}
     else:
         try:
             targets = set(target)
         except TypeError:
-            raise nx.NodeNotFound("target node %s not in graph" % target)
+            raise nx.NodeNotFound(f"target node {target} not in graph")
     if source in targets:
         return []
     if cutoff is None:
@@ -396,8 +396,7 @@ def all_simple_edge_paths(G, source, target, cutoff=None):
     if cutoff < 1:
         return []
     if G.is_multigraph():
-        for simp_path in _all_simple_edge_paths_multigraph(G, source, targets, cutoff):
-            yield simp_path
+        yield from _all_simple_edge_paths_multigraph(G, source, targets, cutoff)
     else:
         for simp_path in _all_simple_paths_graph(G, source, targets, cutoff):
             yield list(zip(simp_path[:-1], simp_path[1:]))
@@ -536,7 +535,7 @@ def shortest_simple_paths(G, source, target, weight=None):
 
         shortest_path_func = _bidirectional_dijkstra
 
-    listA = list()
+    listA = []
     listB = PathBuffer()
     prev_path = None
     while True:
@@ -579,7 +578,7 @@ def shortest_simple_paths(G, source, target, weight=None):
 class PathBuffer:
     def __init__(self):
         self.paths = set()
-        self.sortedpaths = list()
+        self.sortedpaths = []
         self.counter = count()
 
     def __len__(self):

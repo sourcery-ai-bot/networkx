@@ -155,8 +155,8 @@ class TestGraphTinoutUpdating:
         m_rev.pop("d")
         _restore_Tinout(4, self.mapped[4], gparams, sparams)
 
-        assert T1 == set()
-        assert T2 == set()
+        assert not T1
+        assert not T2
         assert T1_tilde == set(self.G1.nodes())
         assert T2_tilde == set(self.G2.nodes())
 
@@ -329,9 +329,9 @@ class TestDiGraphTinoutUpdating:
         m_rev.pop("d")
         _restore_Tinout_Di(4, self.mapped[4], gparams, sparams)
 
-        assert T1_out == set()
-        assert T1_in == set()
-        assert T2_out == set()
-        assert T2_in == set()
+        assert not T1_out
+        assert not T1_in
+        assert not T2_out
+        assert not T2_in
         assert T1_tilde == set(self.G1.nodes())
         assert T2_tilde == set(self.G2.nodes())

@@ -11,11 +11,7 @@ __all__ = ["equitable_color"]
 
 def is_coloring(G, coloring):
     """Determine if the coloring is a valid coloring for the graph G."""
-    # Verify that the coloring is valid.
-    for (s, d) in G.edges:
-        if coloring[s] == coloring[d]:
-            return False
-    return True
+    return all(coloring[s] != coloring[d] for s, d in G.edges)
 
 
 def is_equitable(G, coloring, num_colors=None):
@@ -37,9 +33,7 @@ def is_equitable(G, coloring, num_colors=None):
 
     # If there are more than 2 distinct values, the coloring cannot be equitable
     all_set_sizes = set(color_set_size.values())
-    if len(all_set_sizes) == 0 and num_colors is None:  # Was an empty graph
-        return True
-    elif len(all_set_sizes) == 1:
+    if not all_set_sizes and num_colors is None or len(all_set_sizes) == 1:  # Was an empty graph
         return True
     elif len(all_set_sizes) == 2:
         a, b = list(all_set_sizes)
@@ -60,7 +54,7 @@ def make_N_from_L_C(L, C):
     nodes = L.keys()
     colors = C.keys()
     return {
-        (node, color): sum(1 for v in L[node] if v in C[color])
+        (node, color): sum(v in C[color] for v in L[node])
         for node in nodes
         for color in colors
     }
@@ -68,7 +62,7 @@ def make_N_from_L_C(L, C):
 
 def make_H_from_C_N(C, N):
     return {
-        (c1, c2): sum(1 for node in C[c1] if N[(node, c2)] == 0)
+        (c1, c2): sum(N[(node, c2)] == 0 for node in C[c1])
         for c1 in C.keys()
         for c2 in C.keys()
     }
@@ -162,19 +156,16 @@ def procedure_P(V_minus, V_plus, N, H, F, C, L, excluded_colors=None):
         A_cal.add(pop)
         R_cal.append(pop)
 
-        # TODO: Checking whether a color has been visited can be made faster by
-        # using a look-up table instead of testing for membership in a set by a
-        # logarithmic factor.
-        next_layer = []
-        for k in C.keys():
+        next_layer = [
+            k
+            for k in C.keys()
             if (
                 H[(k, pop)] > 0
                 and k not in A_cal
                 and k not in excluded_colors
                 and k not in marked
-            ):
-                next_layer.append(k)
-
+            )
+        ]
         for dst in next_layer:
             # Record that `dst` can reach `pop`
             T_cal[dst] = pop
@@ -318,7 +309,7 @@ def procedure_P(V_minus, V_plus, N, H, F, C, L, excluded_colors=None):
 
                     I_set.add(z)
                     I_covered.add(z)
-                    I_covered.update([nbr for nbr in L[z]])
+                    I_covered.update(list(L[z]))
 
                     for w in L[z]:
                         if F[w] in A_cal_0 and N[(z, F[w])] == 1:
@@ -448,11 +439,7 @@ def equitable_color(G, num_colors):
     G = nx.relabel_nodes(G, nodes_to_int, copy=True)
 
     # Basic graph statistics and sanity check.
-    if len(G.nodes) > 0:
-        r_ = max(G.degree(node) for node in G.nodes)
-    else:
-        r_ = 0
-
+    r_ = max(G.degree(node) for node in G.nodes) if len(G.nodes) > 0 else 0
     if r_ >= num_colors:
         raise nx.NetworkXAlgorithmError(
             f"Graph has maximum degree {r_}, needs "

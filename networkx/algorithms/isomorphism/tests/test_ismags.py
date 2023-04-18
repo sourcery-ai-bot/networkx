@@ -115,7 +115,7 @@ class TestSubgraphIsomorphism:
 
         g2 = nx.Graph()
         nx.add_cycle(g2, range(4))
-        g2.add_edges_from([(n, m) for n, m in zip(g2, range(4, 8))])
+        g2.add_edges_from(list(zip(g2, range(4, 8))))
         ismags = iso.ISMAGS(g2, g1)
         assert list(ismags.subgraph_isomorphisms_iter(symmetry=True)) == [
             {n: n for n in g1.nodes}
@@ -246,8 +246,8 @@ class TestLargestCommonSubgraph:
         ismags = iso.ISMAGS(
             graph1, graph2, node_match=iso.categorical_node_match("color", None)
         )
-        assert list(ismags.subgraph_isomorphisms_iter(True)) == []
-        assert list(ismags.subgraph_isomorphisms_iter(False)) == []
+        assert not list(ismags.subgraph_isomorphisms_iter(True))
+        assert not list(ismags.subgraph_isomorphisms_iter(False))
         found_mcis = _matches_to_sets(ismags.largest_common_subgraph())
         expected = _matches_to_sets(
             [{2: 2, 3: 4, 4: 3, 5: 5}, {2: 4, 3: 2, 4: 3, 5: 5}]
@@ -257,8 +257,8 @@ class TestLargestCommonSubgraph:
         ismags = iso.ISMAGS(
             graph2, graph1, node_match=iso.categorical_node_match("color", None)
         )
-        assert list(ismags.subgraph_isomorphisms_iter(True)) == []
-        assert list(ismags.subgraph_isomorphisms_iter(False)) == []
+        assert not list(ismags.subgraph_isomorphisms_iter(True))
+        assert not list(ismags.subgraph_isomorphisms_iter(False))
         found_mcis = _matches_to_sets(ismags.largest_common_subgraph())
         # Same answer, but reversed.
         expected = _matches_to_sets(
@@ -278,7 +278,7 @@ class TestLargestCommonSubgraph:
         ismags1 = iso.ISMAGS(
             graph1, graph2, node_match=iso.categorical_node_match("color", None)
         )
-        assert list(ismags1.subgraph_isomorphisms_iter(True)) == []
+        assert not list(ismags1.subgraph_isomorphisms_iter(True))
         found_mcis = _matches_to_sets(ismags1.largest_common_subgraph())
         expected = _matches_to_sets([{0: 0, 1: 1, 2: 2}, {1: 0, 3: 2, 2: 1}])
         assert expected == found_mcis
@@ -287,7 +287,7 @@ class TestLargestCommonSubgraph:
         ismags2 = iso.ISMAGS(
             graph2, graph1, node_match=iso.categorical_node_match("color", None)
         )
-        assert list(ismags2.subgraph_isomorphisms_iter(True)) == []
+        assert not list(ismags2.subgraph_isomorphisms_iter(True))
         found_mcis = _matches_to_sets(ismags2.largest_common_subgraph())
         expected = _matches_to_sets(
             [

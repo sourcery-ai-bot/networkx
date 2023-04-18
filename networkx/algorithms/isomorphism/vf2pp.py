@@ -120,8 +120,7 @@ def vf2pp_isomorphism(G1, G2, node_label=None, default_label=None):
         Node mapping if the two graphs are isomorphic. None otherwise.
     """
     try:
-        mapping = next(vf2pp_all_isomorphisms(G1, G2, node_label, default_label))
-        return mapping
+        return next(vf2pp_all_isomorphisms(G1, G2, node_label, default_label))
     except StopIteration:
         return None
 
@@ -149,9 +148,7 @@ def vf2pp_is_isomorphic(G1, G2, node_label=None, default_label=None):
     bool
         True if the two graphs are isomorphic, False otherwise.
     """
-    if vf2pp_isomorphism(G1, G2, node_label, default_label) is not None:
-        return True
-    return False
+    return vf2pp_isomorphism(G1, G2, node_label, default_label) is not None
 
 
 def vf2pp_all_isomorphisms(G1, G2, node_label=None, default_label=None):
@@ -219,13 +216,10 @@ def vf2pp_all_isomorphisms(G1, G2, node_label=None, default_label=None):
     # Calculate the optimal node ordering
     node_order = _matching_order(graph_params)
 
-    # Initialize the stack
-    stack = []
     candidates = iter(
         find_candidates(node_order[0], graph_params, state_params, G1_degree)
     )
-    stack.append((node_order[0], candidates))
-
+    stack = [(node_order[0], candidates)]
     mapping = state_params.mapping
     reverse_mapping = state_params.reverse_mapping
 
@@ -274,12 +268,11 @@ def vf2pp_all_isomorphisms(G1, G2, node_label=None, default_label=None):
 
 def _precheck_label_properties(graph_params):
     G1, G2, G1_labels, G2_labels, nodes_of_G1Labels, nodes_of_G2Labels, _ = graph_params
-    if any(
-        label not in nodes_of_G1Labels or len(nodes_of_G1Labels[label]) != len(nodes)
+    return not any(
+        label not in nodes_of_G1Labels
+        or len(nodes_of_G1Labels[label]) != len(nodes)
         for label, nodes in nodes_of_G2Labels.items()
-    ):
-        return False
-    return True
+    )
 
 
 def _initialize_parameters(G1, G2, G2_degree, node_label=None, default_label=-1):
@@ -337,14 +330,12 @@ def _initialize_parameters(G1, G2, G2_degree, node_label=None, default_label=-1)
             set(G1.nodes()),
             set(),
         )  # todo: do we need Ti_tilde_in? What nodes does it have?
-        T2_tilde, T2_tilde_in = set(G2.nodes()), set()
     else:
         T1_tilde, T1_tilde_in = set(G1.nodes()), set()
-        T2_tilde, T2_tilde_in = set(G2.nodes()), set()
-
+    T2_tilde, T2_tilde_in = set(G2.nodes()), set()
     state_params = _StateParameters(
-        dict(),
-        dict(),
+        {},
+        {},
         T1,
         T1_in,
         T1_tilde,

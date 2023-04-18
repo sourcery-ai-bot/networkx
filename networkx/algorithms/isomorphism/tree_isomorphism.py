@@ -57,13 +57,7 @@ def root_trees(t1, root1, t2, root2):
         namemap2[v2] = i + namemap2[root2] + 1
         dT.add_edge(namemap2[v1], namemap2[v2])
 
-    # now we really want the inverse of namemap1 and namemap2
-    # giving the old name given the new
-    # since the values of namemap1 and namemap2 are unique
-    # there won't be collisions
-    namemap = {}
-    for old, new in namemap1.items():
-        namemap[new] = old
+    namemap = {new: old for old, new in namemap1.items()}
     for old, new in namemap2.items():
         namemap[new] = old
 
@@ -72,8 +66,7 @@ def root_trees(t1, root1, t2, root2):
 
 # figure out the level of each node, with 0 at root
 def assign_levels(G, root):
-    level = {}
-    level[root] = 0
+    level = {root: 0}
     for (v1, v2) in nx.bfs_edges(G, root):
         level[v2] = level[v1] + 1
 
@@ -96,7 +89,7 @@ def generate_isomorphism(v, w, M, ordered_children):
     # make sure tree1 comes first
     assert v < w
     M.append((v, w))
-    for i, (x, y) in enumerate(zip(ordered_children[v], ordered_children[w])):
+    for x, y in zip(ordered_children[v], ordered_children[w]):
         generate_isomorphism(x, y, M, ordered_children)
 
 

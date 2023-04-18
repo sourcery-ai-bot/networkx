@@ -31,7 +31,7 @@ print(f"A total of {num_commits} changes have been committed.\n")
 # Use filter to remove empty strings
 commits = filter(None, call(f"git log --since='{tag_date}' --pretty=%s --reverse"))
 for c in commits:
-    print("- " + c)
+    print(f"- {c}")
 
 print(f"\nIt contained the following {len(merges)} merges:\n")
 for (merge, message) in merges:
@@ -40,7 +40,7 @@ for (merge, message) in merges:
     else:
         PR = ""
 
-    print("- " + message + PR)
+    print(f"- {message}{PR}")
 
 print("\nMade by the following committers [alphabetical by last name]:\n")
 
@@ -49,12 +49,11 @@ authors = [a.strip() for a in authors if a.strip()]
 
 
 def key(author):
-    author = [v for v in author.split() if v[0] in string.ascii_letters]
-    if len(author) > 0:
+    if author := [v for v in author.split() if v[0] in string.ascii_letters]:
         return author[-1]
 
 
 authors = sorted(set(authors), key=key)
 
 for a in authors:
-    print("- " + a)
+    print(f"- {a}")

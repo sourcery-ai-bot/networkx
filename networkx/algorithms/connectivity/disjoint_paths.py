@@ -158,21 +158,13 @@ def edge_disjoint_paths(
     if flow_func is None:
         flow_func = default_flow_func
 
-    if auxiliary is None:
-        H = build_auxiliary_edge_connectivity(G)
-    else:
-        H = auxiliary
-
+    H = build_auxiliary_edge_connectivity(G) if auxiliary is None else auxiliary
     # Maximum possible edge disjoint paths
     possible = min(H.out_degree(s), H.in_degree(t))
     if not possible:
         raise NetworkXNoPath
 
-    if cutoff is None:
-        cutoff = possible
-    else:
-        cutoff = min(cutoff, possible)
-
+    cutoff = possible if cutoff is None else min(cutoff, possible)
     # Compute maximum flow between source and target. Flow functions in
     # NetworkX return a residual network.
     kwargs = dict(
@@ -354,11 +346,7 @@ def node_disjoint_paths(
     if t not in G:
         raise nx.NetworkXError(f"node {t} not in graph")
 
-    if auxiliary is None:
-        H = build_auxiliary_node_connectivity(G)
-    else:
-        H = auxiliary
-
+    H = build_auxiliary_node_connectivity(G) if auxiliary is None else auxiliary
     mapping = H.graph.get("mapping", None)
     if mapping is None:
         raise nx.NetworkXError("Invalid auxiliary digraph.")
@@ -368,11 +356,7 @@ def node_disjoint_paths(
     if not possible:
         raise NetworkXNoPath
 
-    if cutoff is None:
-        cutoff = possible
-    else:
-        cutoff = min(cutoff, possible)
-
+    cutoff = possible if cutoff is None else min(cutoff, possible)
     kwargs = dict(flow_func=flow_func, residual=residual, auxiliary=H, cutoff=cutoff)
 
     # The edge disjoint paths in the auxiliary digraph correspond to the node

@@ -136,7 +136,7 @@ def strategy_independent_set(G, colors):
 
     """
     remaining_nodes = set(G)
-    while len(remaining_nodes) > 0:
+    while remaining_nodes:
         nodes = _maximal_independent_set(G.subgraph(remaining_nodes))
         remaining_nodes -= nodes
         yield from nodes
@@ -232,7 +232,7 @@ def strategy_saturation_largest_first(G, colors):
         for v in G[node]:
             distinct_colors[v].add(0)
 
-    while not len(G) == len(colors):
+    while len(G) != len(colors):
         # Update the distinct color sets for the neighbors.
         for node, color in colors.items():
             for neighbor in G[node]:
@@ -241,10 +241,7 @@ def strategy_saturation_largest_first(G, colors):
         # Compute the maximum saturation and the set of nodes that
         # achieve that saturation.
         saturation = {v: len(c) for v, c in distinct_colors.items() if v not in colors}
-        # Yield the node with the highest saturation, and break ties by
-        # degree.
-        node = max(saturation, key=lambda v: (saturation[v], G.degree(v)))
-        yield node
+        yield max(saturation, key=lambda v: (saturation[v], G.degree(v)))
 
 
 #: Dictionary mapping name of a strategy as a string to the strategy function.
@@ -499,7 +496,7 @@ def _greedy_coloring_with_interchange(G, nodes):
             while connected and col1 < k:
                 col1 += 1
                 neighbor_cols = graph[node].iter_neighbors_color(col1)
-                col1_adj = [it for it in neighbor_cols]
+                col1_adj = list(neighbor_cols)
 
                 col2 = col1
                 while connected and col2 < k:

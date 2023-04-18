@@ -179,8 +179,9 @@ def dedensify(G, threshold, prefix=None, copy=True):
 
     auxillary = {}
     for node in G:
-        high_degree_neighbors = frozenset(high_degree_nodes & set(G[node]))
-        if high_degree_neighbors:
+        if high_degree_neighbors := frozenset(
+            high_degree_nodes & set(G[node])
+        ):
             if high_degree_neighbors in auxillary:
                 auxillary[high_degree_neighbors].add(node)
             else:
@@ -259,7 +260,7 @@ def _snap_build_graph(
     summary graph: Networkx graph
     """
     output = G.__class__()
-    node_label_lookup = dict()
+    node_label_lookup = {}
     for index, group_id in enumerate(groups):
         group_set = groups[group_id]
         supernode = f"{prefix}{index}"
@@ -344,9 +345,9 @@ def _snap_eligible_group(G, groups, group_lookup, edge_types):
         for other_group_id in groups:
             edge_counts = Counter()
             for node in current_group:
-                edge_counts.update(neighbor_info[node][other_group_id].keys())
+                edge_counts |= neighbor_info[node][other_group_id].keys()
 
-            if not all(count == group_size for count in edge_counts.values()):
+            if any(count != group_size for count in edge_counts.values()):
                 # only the neighbor_info of the returned group_id is required for handling group splits
                 return group_id, neighbor_info
 
@@ -525,7 +526,7 @@ def snap_aggregation(
         else:
             # list is needed to avoid mutating while iterating
             edges = [((v, u), etype) for (u, v), etype in edge_types.items()]
-        edge_types.update(edges)
+        edge_types |= edges
 
     group_lookup = {
         node: tuple(attrs[attr] for attr in node_attributes)

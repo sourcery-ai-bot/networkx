@@ -107,10 +107,10 @@ class TimeRespectingGraphMatcher(GraphMatcher):
             if isinstance(Gx, nx.Graph):  # Graph G[u][v] returns the data dictionary.
                 dates.append(Gx[Gx_node][n][self.temporal_attribute_name])
             else:  # MultiGraph G[u][v] returns a dictionary of key -> data dictionary.
-                for edge in Gx[Gx_node][
-                    n
-                ].values():  # Iterates all edges between node pair.
-                    dates.append(edge[self.temporal_attribute_name])
+                dates.extend(
+                    edge[self.temporal_attribute_name]
+                    for edge in Gx[Gx_node][n].values()
+                )
         if any(x is None for x in dates):
             raise ValueError("Datetime not supplied for at least one edge.")
         return not dates or max(dates) - min(dates) <= self.delta
@@ -133,12 +133,11 @@ class TimeRespectingGraphMatcher(GraphMatcher):
         functional. Implementations should consider multigraphs.
         """
         neighbors = [n for n in self.G1[G1_node] if n in self.core_1]
-        if not self.one_hop(self.G1, G1_node, neighbors):  # Fail fast on first node.
-            return False
-        if not self.two_hop(self.G1, self.core_1, G1_node, neighbors):
-            return False
-        # Otherwise, this node is semantically feasible!
-        return True
+        return (
+            bool(self.two_hop(self.G1, self.core_1, G1_node, neighbors))
+            if self.one_hop(self.G1, G1_node, neighbors)
+            else False
+        )
 
 
 class TimeRespectingDiGraphMatcher(DiGraphMatcher):
@@ -171,15 +170,14 @@ class TimeRespectingDiGraphMatcher(DiGraphMatcher):
         Get the dates of edges from predecessors.
         """
         pred_dates = []
-        if isinstance(Gx, nx.DiGraph):  # Graph G[u][v] returns the data dictionary.
-            for n in pred:
+        for n in pred:
+            if isinstance(Gx, nx.DiGraph):
                 pred_dates.append(Gx[n][Gx_node][self.temporal_attribute_name])
-        else:  # MultiGraph G[u][v] returns a dictionary of key -> data dictionary.
-            for n in pred:
-                for edge in Gx[n][
-                    Gx_node
-                ].values():  # Iterates all edge data between node pair.
-                    pred_dates.append(edge[self.temporal_attribute_name])
+            else:
+                pred_dates.extend(
+                    edge[self.temporal_attribute_name]
+                    for edge in Gx[n][Gx_node].values()
+                )
         return pred_dates
 
     def get_succ_dates(self, Gx, Gx_node, core_x, succ):
@@ -187,15 +185,14 @@ class TimeRespectingDiGraphMatcher(DiGraphMatcher):
         Get the dates of edges to successors.
         """
         succ_dates = []
-        if isinstance(Gx, nx.DiGraph):  # Graph G[u][v] returns the data dictionary.
-            for n in succ:
+        for n in succ:
+            if isinstance(Gx, nx.DiGraph):
                 succ_dates.append(Gx[Gx_node][n][self.temporal_attribute_name])
-        else:  # MultiGraph G[u][v] returns a dictionary of key -> data dictionary.
-            for n in succ:
-                for edge in Gx[Gx_node][
-                    n
-                ].values():  # Iterates all edge data between node pair.
-                    succ_dates.append(edge[self.temporal_attribute_name])
+            else:
+                succ_dates.extend(
+                    edge[self.temporal_attribute_name]
+                    for edge in Gx[Gx_node][n].values()
+                )
         return succ_dates
 
     def one_hop(self, Gx, Gx_node, core_x, pred, succ):
@@ -256,33 +253,26 @@ class TimeRespectingDiGraphMatcher(DiGraphMatcher):
         time-respecting with respect to each other, regardless of
         direction.
         """
-        time_respecting = True
         dates = pred_dates + succ_dates
 
         if any(x is None for x in dates):
             raise ValueError("Date or datetime not supplied for at least one edge.")
 
         dates.sort()  # Small to large.
-        if 0 < len(dates) and not (dates[-1] - dates[0] <= self.delta):
-            time_respecting = False
-        return time_respecting
+        return len(dates) <= 0 or dates[-1] - dates[0] <= self.delta
 
     def test_two(self, pred_dates, succ_dates):
         """
         Edges from a dual Gx_node in the mapping should be ordered in
         a time-respecting manner.
         """
-        time_respecting = True
         pred_dates.sort()
         succ_dates.sort()
-        # First out before last in; negative of the necessary condition for time-respect.
-        if (
-            0 < len(succ_dates)
-            and 0 < len(pred_dates)
-            and succ_dates[0] < pred_dates[-1]
-        ):
-            time_respecting = False
-        return time_respecting
+        return (
+            len(succ_dates) <= 0
+            or len(pred_dates) <= 0
+            or succ_dates[0] >= pred_dates[-1]
+        )
 
     def semantic_feasibility(self, G1_node, G2_node):
         """Returns True if adding (G1_node, G2_node) is semantically
@@ -300,9 +290,8 @@ class TimeRespectingDiGraphMatcher(DiGraphMatcher):
             self.G1, G1_node, self.core_1, pred, succ
         ):  # Fail fast on first node.
             return False
-        if not self.two_hop_pred(self.G1, G1_node, self.core_1, pred):
-            return False
-        if not self.two_hop_succ(self.G1, G1_node, self.core_1, succ):
-            return False
-        # Otherwise, this node is semantically feasible!
-        return True
+        return (
+            bool(self.two_hop_succ(self.G1, G1_node, self.core_1, succ))
+            if self.two_hop_pred(self.G1, G1_node, self.core_1, pred)
+            else False
+        )

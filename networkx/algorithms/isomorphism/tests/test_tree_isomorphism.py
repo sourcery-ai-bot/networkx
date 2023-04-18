@@ -26,28 +26,20 @@ def check_isomorphism(t1, t2, isomorphism):
 
     edges_1 = []
     for (u, v) in t1.edges():
-        if d1:
+        if not d1 and u < v or d1:
             edges_1.append((u, v))
         else:
-            # if not directed, then need to
-            # put the edge in a consistent direction
-            if u < v:
-                edges_1.append((u, v))
-            else:
-                edges_1.append((v, u))
+            edges_1.append((v, u))
 
     edges_2 = []
     for (u, v) in t2.edges():
         # translate to names for t1
         u = mapping[u]
         v = mapping[v]
-        if d2:
+        if not d2 and u < v or d2:
             edges_2.append((u, v))
         else:
-            if u < v:
-                edges_2.append((u, v))
-            else:
-                edges_2.append((v, u))
+            edges_2.append((v, u))
 
     return sorted(edges_1) == sorted(edges_2)
 
@@ -134,7 +126,7 @@ def test_hardcoded():
     isomorphism = sorted(rooted_tree_isomorphism(t1, root1, t2, root2))
 
     # is correct by hand
-    assert (isomorphism == isomorphism1) or (isomorphism == isomorphism2)
+    assert isomorphism in [isomorphism1, isomorphism2]
 
     # check algorithmically
     assert check_isomorphism(t1, t2, isomorphism)
@@ -151,7 +143,7 @@ def test_hardcoded():
     isomorphism = sorted(rooted_tree_isomorphism(t1, root1, t2, root2))
 
     # is correct by hand
-    assert (isomorphism == isomorphism1) or (isomorphism == isomorphism2)
+    assert isomorphism in [isomorphism1, isomorphism2]
 
     # check algorithmically
     assert check_isomorphism(t1, t2, isomorphism)
@@ -160,10 +152,7 @@ def test_hardcoded():
 # randomly swap a tuple (a,b)
 def random_swap(t):
     (a, b) = t
-    if random.randint(0, 1) == 1:
-        return (a, b)
-    else:
-        return (b, a)
+    return (a, b) if random.randint(0, 1) == 1 else (b, a)
 
 
 # given a tree t1, create a new tree t2
@@ -173,17 +162,17 @@ def positive_single_tree(t1):
 
     assert nx.is_tree(t1)
 
-    nodes1 = [n for n in t1.nodes()]
+    nodes1 = list(t1.nodes())
     # get a random permutation of this
     nodes2 = nodes1.copy()
     random.shuffle(nodes2)
 
     # this is one isomorphism, however they may be multiple
     # so we don't necessarily get this one back
-    someisomorphism = [(u, v) for (u, v) in zip(nodes1, nodes2)]
+    someisomorphism = list(zip(nodes1, nodes2))
 
     # map from old to new
-    map1to2 = {u: v for (u, v) in someisomorphism}
+    map1to2 = dict(someisomorphism)
 
     # get the edges with the transformed names
     edges2 = [random_swap((map1to2[u], map1to2[v])) for (u, v) in t1.edges()]
